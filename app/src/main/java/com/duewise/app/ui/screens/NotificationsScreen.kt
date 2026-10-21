@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.duewise.app.data.Reminder
-import com.duewise.app.data.ReminderKind
+import com.duewise.app.data.Assignment
+import com.duewise.app.data.Task
 import com.duewise.app.ui.components.DueWiseCard
 import com.duewise.app.ui.components.EmptyState
 import com.duewise.app.ui.components.ScreenHeader
@@ -23,55 +23,84 @@ import com.duewise.app.ui.components.SectionLabel
 import com.duewise.app.ui.theme.AccentBlue
 import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
+import com.duewise.app.util.toDisplayDate
 
-/** Reminder cards for the next tasks and the nearest final deadline. Each card opens Task details. */
+// Reminders: the next 2 tasks, plus the assignment with the nearest final deadline.
 @Composable
 fun NotificationsScreen(
-    reminders: List<Reminder>,
+    upcomingTasks: List<Task>,
+    assignmentTitles: Map<Int, String>,
+    nearestDeadline: Assignment?,
     onBack: () -> Unit,
-    onOpenTask: (Int) -> Unit
+    onOpenTask: (Int) -> Unit,
+    onOpenAssignment: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") { ScreenHeader(title = "Notifications", onBack = onBack) }
-        item(key = "hint") {
+        item { ScreenHeader(title = "Notifications", onBack = onBack) }
+        item {
             Text(
                 text = "Reminders for your next tasks and deadlines.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = TextSecondary
             )
         }
-        item(key = "label") { SectionLabel("Recent") }
-        if (reminders.isEmpty()) {
-            item(key = "empty") { EmptyState("No reminders. You're all caught up.") }
-        } else {
-            items(reminders, key = { "${it.kind}-${it.taskId}-${it.title}" }) { reminder ->
-                ReminderCard(reminder = reminder, onOpen = { onOpenTask(reminder.taskId) })
+        item { SectionLabel("Recent") }
+
+        if (upcomingTasks.isEmpty() && nearestDeadline == null) {
+            item { EmptyState("No reminders. You're all caught up.") }
+        }
+
+        items(upcomingTasks) { task ->
+            ReminderCard(
+                label = "TASK REMINDER",
+                title = task.name,
+                detail = "${assignmentTitles[task.assignmentId]} · Target ${task.targetDate.toDisplayDate()}",
+                linkText = "View task →",
+                onClick = { onOpenTask(task.id) }
+            )
+        }
+
+        if (nearestDeadline != null) {
+            item {
+                ReminderCard(
+                    label = "FINAL DEADLINE",
+                    title = nearestDeadline.title,
+                    detail = "Submit your assignment by ${nearestDeadline.deadline.toDisplayDate()}.",
+                    linkText = "View assignment →",
+                    onClick = { onOpenAssignment(nearestDeadline.id) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ReminderCard(reminder: Reminder, onOpen: () -> Unit) {
-    DueWiseCard(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+private fun ReminderCard(
+    label: String,
+    title: String,
+    detail: String,
+    linkText: String,
+    onClick: () -> Unit
+) {
+    DueWiseCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = reminder.kind.label, style = MaterialTheme.typography.labelMedium, color = AccentBlue)
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = AccentBlue)
             Text(
-                text = reminder.title,
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = TextPrimary
             )
-            Text(text = reminder.detail, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+            Text(text = detail, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
             Text(
-                text = if (reminder.kind == ReminderKind.FinalDeadline) "View next task →" else "View task →",
+                text = linkText,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = AccentBlue,

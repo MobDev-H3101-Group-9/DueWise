@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,83 +28,62 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.duewise.app.ui.theme.AccentBlue
-import com.duewise.app.ui.theme.CheckGreen
 import com.duewise.app.ui.theme.CardSurface
+import com.duewise.app.ui.theme.CheckGreen
 import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
 
-/** Side padding shared by every screen so content lines up the same way everywhere. */
-val ScreenPadding = PaddingValues(horizontal = 20.dp)
-
-/** Outermost container for form and details screens: scrolls, and moves above the keyboard. */
+// Outer container for form and details screens. It scrolls and moves up when the keyboard opens.
 @Composable
-fun ScrollScreen(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
+fun ScrollScreen(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(ScreenPadding)
-            .padding(bottom = 24.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content
     )
 }
 
-/** Screen title row with an optional back arrow. */
+// Screen title with an optional back arrow.
 @Composable
-fun ScreenHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null
-) {
+fun ScreenHeader(title: String, onBack: (() -> Unit)? = null) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (onBack != null) {
             IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = TextPrimary
-                )
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
             }
             Spacer(Modifier.width(4.dp))
         }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = TextPrimary,
-            modifier = Modifier.weight(1f)
-        )
+        Text(text = title, style = MaterialTheme.typography.headlineMedium, color = TextPrimary)
     }
 }
 
-/** Small uppercase heading above a group of items, e.g. "UPCOMING TASKS". */
+// Small uppercase heading, like "UPCOMING TASKS".
 @Composable
-fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+fun SectionLabel(text: String) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = TextSecondary,
-        modifier = modifier.padding(top = 12.dp)
+        modifier = Modifier.padding(top = 12.dp)
     )
 }
 
-/** Shown in place of a list when the list has nothing in it. */
+// Shown instead of a list when the list is empty.
 @Composable
-fun EmptyState(message: String, modifier: Modifier = Modifier) {
-    DueWiseCard(modifier = modifier.fillMaxWidth()) {
+fun EmptyState(message: String) {
+    DueWiseCard(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
@@ -115,29 +93,28 @@ fun EmptyState(message: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Label above a value on details screens, e.g. "TARGET DATE" over "September 20, 2026". */
+// A label with a value under it, like "TARGET DATE" / "September 20, 2026".
 @Composable
-fun LabeledValue(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+fun LabeledValue(label: String, value: String) {
+    Column {
         Text(text = label.uppercase(), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
         Text(text = value, style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
     }
 }
 
-/** DueWise logo: a rounded blue square with a clock ring and a green check. */
+// DueWise logo: blue rounded square with a white ring and a green check.
 @Composable
-fun AppLogo(modifier: Modifier = Modifier, size: Dp = 48.dp) {
+fun AppLogo(size: Dp) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .size(size)
-            .clip(RoundedCornerShape(size * 0.25f))
-            .background(AccentBlue),
+            .background(AccentBlue, RoundedCornerShape(size / 4)),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
                 .size(size * 0.62f)
-                .border(width = size * 0.06f, color = CardSurface, shape = CircleShape),
+                .border(3.dp, CardSurface, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(

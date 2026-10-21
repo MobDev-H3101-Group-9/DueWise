@@ -2,27 +2,23 @@ package com.duewise.app.data
 
 import java.time.LocalDate
 
-/**
- * Starting data, copied from the approved prototype.
- * The app keeps changes in memory while it runs; data persistence is out of scope (MS1, Section V).
- */
+// Sample data copied from our Figma prototype.
+// Changes are kept in memory while the app is open (no database).
 object SampleData {
 
-    private fun sep(day: Int): LocalDate = LocalDate.of(2026, 9, day)
-
     val assignments = listOf(
-        Assignment(id = 1, title = "Mobile App Prototype", subject = "Human-Computer Interaction", deadline = sep(30)),
-        Assignment(id = 2, title = "Research Paper", subject = "English", deadline = sep(29)),
-        Assignment(id = 3, title = "Biology Lab Report", subject = "Biology", deadline = sep(28))
+        Assignment(1, "Mobile App Prototype", "Human-Computer Interaction", LocalDate.of(2026, 9, 30)),
+        Assignment(2, "Research Paper", "English", LocalDate.of(2026, 9, 29)),
+        Assignment(3, "Biology Lab Report", "Biology", LocalDate.of(2026, 9, 28))
     )
 
     val tasks = listOf(
-        Task(id = 1, assignmentId = 1, name = "Draft user flow", targetDate = sep(20), isCompleted = true),
-        Task(id = 2, assignmentId = 1, name = "Create wireframes", targetDate = sep(23)),
-        Task(id = 3, assignmentId = 1, name = "Connect prototype screens", targetDate = sep(26)),
-        Task(id = 4, assignmentId = 1, name = "Review and revise", targetDate = sep(28)),
-        Task(id = 5, assignmentId = 1, name = "Submit prototype", targetDate = sep(30)),
-        Task(id = 6, assignmentId = 2, name = "Find sources", targetDate = sep(20)),
-        Task(id = 7, assignmentId = 3, name = "Write results", targetDate = sep(25))
+        Task(1, 1, "Draft user flow", LocalDate.of(2026, 9, 20), isCompleted = true),
+        Task(2, 1, "Create wireframes", LocalDate.of(2026, 9, 23)),
+        Task(3, 1, "Connect prototype screens", LocalDate.of(2026, 9, 26)),
+        Task(4, 1, "Review and revise", LocalDate.of(2026, 9, 28)),
+        Task(5, 1, "Submit prototype", LocalDate.of(2026, 9, 30)),
+        Task(6, 2, "Find sources", LocalDate.of(2026, 9, 20)),
+        Task(7, 3, "Write results", LocalDate.of(2026, 9, 25))
     )
 }

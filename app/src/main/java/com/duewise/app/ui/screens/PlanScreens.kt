@@ -14,11 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -40,19 +38,18 @@ import com.duewise.app.ui.theme.TextSecondary
 import com.duewise.app.util.toDisplayDate
 import java.time.LocalDate
 
-/**
- * Step 1 of 2: assignment title, subject and final deadline.
- * Nothing is saved here; the values travel to step 2 as navigation arguments.
- */
+// Step 1 of 2: assignment title, subject and final deadline.
+// Nothing is saved yet. The values are passed to step 2.
 @Composable
 fun NewAssignmentScreen(
-    defaultDeadline: LocalDate,
     onBack: () -> Unit,
-    onContinue: (title: String, subject: String, deadline: LocalDate) -> Unit
+    onContinue: (String, String, LocalDate) -> Unit
 ) {
+    // rememberSaveable keeps what the user typed when they come back from step 2.
     var title by rememberSaveable { mutableStateOf("") }
     var subject by rememberSaveable { mutableStateOf("") }
-    var deadline by rememberSaveable { mutableStateOf(defaultDeadline) }
+    var deadline by rememberSaveable { mutableStateOf(LocalDate.now().plusWeeks(2)) }
+
     val canContinue = title.isNotBlank() && subject.isNotBlank()
 
     ScrollScreen {
@@ -74,38 +71,32 @@ fun NewAssignmentScreen(
         DateField(label = "Final deadline", date = deadline, onDateSelected = { deadline = it })
 
         if (!canContinue) {
-            Text(
-                text = "Enter a title and a subject to continue.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
-            )
+            Text("Enter a title and a subject to continue.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         }
         PrimaryButton(
             text = "Continue to Tasks",
             onClick = { onContinue(title.trim(), subject.trim(), deadline) },
-            enabled = canContinue,
-            modifier = Modifier.padding(top = 16.dp)
+            enabled = canContinue
         )
     }
 }
 
-/**
- * Step 2 of 2: build the list of smaller tasks, then save the whole plan.
- * The draft list is shown on screen so every + Add task has a visible result.
- */
+// Step 2 of 2: add the smaller tasks, then save the whole plan.
+// Each task added shows up in the "Tasks in this plan" list.
 @Composable
 fun AddTasksScreen(
     assignmentTitle: String,
     deadline: LocalDate,
-    today: LocalDate,
     onBack: () -> Unit,
     onSavePlan: (List<TaskDraft>) -> Unit
 ) {
-    val drafts = rememberSaveable(saver = TaskDraftListSaver) { mutableStateListOf<TaskDraft>() }
-    val defaultDate = if (today.isAfter(deadline)) deadline else today
-    var taskName by rememberSaveable { mutableStateOf("") }
-    var targetDate by rememberSaveable { mutableStateOf(defaultDate) }
-    var showNameError by rememberSaveable { mutableStateOf(false) }
+    // State: tasks added so far, and the form for the next task
+    val drafts = remember { mutableStateListOf<TaskDraft>() }
+    var taskName by remember { mutableStateOf("") }
+    var targetDate by remember { mutableStateOf(LocalDate.now()) }
+    var showNameError by remember { mutableStateOf(false) }
+
+    val dateIsTooLate = targetDate.isAfter(deadline)
 
     ScrollScreen {
         ScreenHeader(title = "Add smaller tasks", onBack = onBack)
@@ -120,8 +111,8 @@ fun AddTasksScreen(
         if (drafts.isEmpty()) {
             EmptyState("No tasks added yet. Add at least one task to save your plan.")
         } else {
-            drafts.forEachIndexed { index, draft ->
-                DraftTaskRow(draft = draft, onRemove = { drafts.removeAt(index) })
+            for (draft in drafts) {
+                DraftTaskRow(draft = draft, onRemove = { drafts.remove(draft) })
             }
         }
 
@@ -138,19 +129,23 @@ fun AddTasksScreen(
         if (showNameError) {
             Text("Enter a task name first.", style = MaterialTheme.typography.bodyMedium, color = DangerRed)
         }
-        DateField(
-            label = "Target date",
-            date = targetDate,
-            onDateSelected = { targetDate = it },
-            latestAllowed = deadline
-        )
+
+        DateField(label = "Target date", date = targetDate, onDateSelected = { targetDate = it })
+        if (dateIsTooLate) {
+            Text(
+                text = "Pick a date on or before the final deadline.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = DangerRed
+            )
+        }
+
         OutlinedActionButton(
             text = "+ Add task",
             textColor = AccentBlue,
             onClick = {
                 if (taskName.isBlank()) {
                     showNameError = true
-                } else {
+                } else if (!dateIsTooLate) {
                     drafts.add(TaskDraft(taskName.trim(), targetDate))
                     taskName = ""
                 }
@@ -160,13 +155,13 @@ fun AddTasksScreen(
         PrimaryButton(
             text = "Save plan & view tasks",
             onClick = { onSavePlan(drafts.toList()) },
-            enabled = drafts.isNotEmpty(),
-            modifier = Modifier.padding(top = 16.dp)
+            enabled = drafts.isNotEmpty()
         )
         OutlinedActionButton(text = "Back to assignment information", onClick = onBack)
     }
 }
 
+// One row in "Tasks in this plan", with an X to remove it.
 @Composable
 private fun DraftTaskRow(draft: TaskDraft, onRemove: () -> Unit) {
     DueWiseCard(modifier = Modifier.fillMaxWidth()) {
@@ -184,18 +179,8 @@ private fun DraftTaskRow(draft: TaskDraft, onRemove: () -> Unit) {
                 )
             }
             IconButton(onClick = onRemove) {
-                Icon(Icons.Filled.Close, contentDescription = "Remove ${draft.name}", tint = TextSecondary)
+                Icon(Icons.Filled.Close, contentDescription = "Remove task", tint = TextSecondary)
             }
         }
     }
 }
-
-/** Lets the draft list survive rotation: saved as [name, epochDay, name, epochDay, ...]. */
-private val TaskDraftListSaver = listSaver<SnapshotStateList<TaskDraft>, Any>(
-    save = { list -> list.flatMap { listOf(it.name, it.targetDate.toEpochDay()) } },
-    restore = { flat ->
-        flat.chunked(2)
-            .map { TaskDraft(name = it[0] as String, targetDate = LocalDate.ofEpochDay(it[1] as Long)) }
-            .toMutableStateList()
-    }
-)

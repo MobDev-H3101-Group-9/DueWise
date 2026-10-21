@@ -3,23 +3,15 @@ package com.duewise.app.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,7 +30,7 @@ import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
 import com.duewise.app.util.toDisplayDate
 
-/** An assignment with all of its tasks, sorted by target date. */
+// One assignment and all of its tasks.
 @Composable
 fun AssignmentDetailsScreen(
     assignment: Assignment,
@@ -53,13 +45,35 @@ fun AssignmentDetailsScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") { ScreenHeader(title = "Assignment details", onBack = onBack) }
-        item(key = "summary") { AssignmentSummaryCard(assignment) }
-        item(key = "tasks-label") { SectionLabel("Tasks") }
+        item { ScreenHeader(title = "Assignment details", onBack = onBack) }
+
+        // Summary card: title, subject, final deadline
+        item {
+            DueWiseCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = assignment.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Text(text = assignment.subject, style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
+                    HorizontalDivider(color = CardBorder, modifier = Modifier.padding(vertical = 12.dp))
+                    Text(
+                        text = "Final deadline: ${assignment.deadline.toDisplayDate()}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextPrimary
+                    )
+                }
+            }
+        }
+
+        item { SectionLabel("Tasks") }
+
         if (tasks.isEmpty()) {
-            item(key = "empty") { EmptyState("This assignment has no tasks.") }
+            item { EmptyState("This assignment has no tasks.") }
         } else {
-            items(tasks, key = { it.id }) { task ->
+            items(tasks) { task ->
                 TaskCard(
                     task = task,
                     assignmentTitle = null,
@@ -68,49 +82,19 @@ fun AssignmentDetailsScreen(
                 )
             }
         }
-        item(key = "delete") {
+
+        item {
             OutlinedActionButton(
                 text = "Delete assignment",
                 onClick = onDeleteAssignment,
                 textColor = DangerRed,
-                centered = true,
-                modifier = Modifier.padding(top = 12.dp)
+                centered = true
             )
         }
     }
 }
 
-@Composable
-private fun AssignmentSummaryCard(assignment: Assignment) {
-    DueWiseCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = assignment.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-            Text(text = assignment.subject, style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
-            HorizontalDivider(color = CardBorder, modifier = Modifier.padding(vertical = 8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.DateRange,
-                    contentDescription = null,
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = "Final deadline: ${assignment.deadline.toDisplayDate()}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextPrimary
-                )
-            }
-        }
-    }
-}
-
-/** Confirmation before deleting an assignment and all of its tasks. Cancel changes nothing. */
+// Asks before deleting an assignment and all its tasks. Cancel changes nothing.
 @Composable
 fun DeleteAssignmentScreen(
     assignment: Assignment,
@@ -123,7 +107,7 @@ fun DeleteAssignmentScreen(
         Text(text = "Delete this assignment?", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
         Text(text = assignment.title, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
         Text(
-            text = "The assignment and its $taskCount ${if (taskCount == 1) "task" else "tasks"} will be removed from your lists.",
+            text = "The assignment and its $taskCount task(s) will be removed from your lists.",
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )

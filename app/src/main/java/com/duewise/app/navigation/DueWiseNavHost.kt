@@ -1,6 +1,5 @@
 package com.duewise.app.navigation
 
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -8,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,306 +31,323 @@ import com.duewise.app.ui.screens.UpcomingScreen
 import com.duewise.app.ui.theme.AppBackground
 import java.time.LocalDate
 
-/**
- * App shell: one NavController, one Scaffold, and the bottom bar on the four tab screens.
- * All navigation logic lives in this file; screens only report user events through lambdas.
- */
+// The app's main layout: one NavController, the screens, and the bottom bar.
+// All navigation code is in this file. Screens only tell us what the user tapped.
 @Composable
 fun DueWiseApp(viewModel: DueWiseViewModel) {
     val navController = rememberNavController()
+
+    // Show the bottom bar only on the 4 tab screens.
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
-    val showBottomBar = TopLevelTab.entries.any { it.route == currentRoute }
+    val showBottomBar = BottomTab.entries.any { it.route == currentRoute }
 
     Scaffold(
         containerColor = AppBackground,
         bottomBar = {
             if (showBottomBar) {
-                DueWiseBottomBar(
+                BottomNavBar(
                     currentRoute = currentRoute,
-                    onTabSelected = { route -> navController.navigateToTab(route) }
+                    onTabSelected = { route -> goToTab(navController, route) }
                 )
             }
         }
     ) { innerPadding ->
-        DueWiseNavHost(
+        NavHost(
             navController = navController,
-            viewModel = viewModel,
-            modifier = Modifier
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-        )
+            startDestination = Routes.TODAY,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+
+            // ---------- Bottom bar tabs ----------
+
+            composable(Routes.TODAY) { entry ->
+                TodayScreen(
+                    nextTasks = viewModel.nextPendingTasks(),
+                    completedTasks = viewModel.completedTasks(),
+                    assignmentTitles = viewModel.assignmentTitles(),
+                    onAddAssignment = {
+                        if (entry.isResumed()) navController.navigate(Routes.NEW_ASSIGNMENT)
+                    },
+                    onOpenNotifications = {
+                        if (entry.isResumed()) navController.navigate(Routes.NOTIFICATIONS)
+                    },
+                    onSeeAllUpcoming = {
+                        if (entry.isResumed()) goToTab(navController, Routes.UPCOMING)
+                    },
+                    onOpenTask = { taskId ->
+                        if (entry.isResumed()) navController.navigate(Routes.taskDetails(taskId))
+                    },
+                    onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) }
+                )
+            }
+
+            composable(Routes.UPCOMING) { entry ->
+                UpcomingScreen(
+                    tasks = viewModel.pendingTasks(),
+                    assignmentTitles = viewModel.assignmentTitles(),
+                    onOpenTask = { taskId ->
+                        if (entry.isResumed()) navController.navigate(Routes.taskDetails(taskId))
+                    },
+                    onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) }
+                )
+            }
+
+            composable(Routes.COMPLETED) { entry ->
+                CompletedScreen(
+                    tasks = viewModel.completedTasks(),
+                    assignmentTitles = viewModel.assignmentTitles(),
+                    onOpenTask = { taskId ->
+                        if (entry.isResumed()) navController.navigate(Routes.taskDetails(taskId))
+                    },
+                    onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) }
+                )
+            }
+
+            composable(Routes.SETTINGS) { entry ->
+                SettingsScreen(
+                    onLogOut = {
+                        if (entry.isResumed()) {
+                            // Clear every screen so Back cannot return into the app after logging out.
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            // ---------- Login (only reached after Log Out) ----------
+
+            composable(Routes.LOGIN) { entry ->
+                LoginScreen(
+                    onSignIn = {
+                        if (entry.isResumed()) {
+                            navController.navigate(Routes.TODAY) {
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            // ---------- Notifications ----------
+
+            composable(Routes.NOTIFICATIONS) { entry ->
+                NotificationsScreen(
+                    upcomingTasks = viewModel.pendingTasks().take(2),
+                    assignmentTitles = viewModel.assignmentTitles(),
+                    nearestDeadline = viewModel.nearestDeadline(),
+                    onBack = {
+                        if (entry.isResumed()) navController.popBackStack()
+                    },
+                    onOpenTask = { taskId ->
+                        if (entry.isResumed()) navController.navigate(Routes.taskDetails(taskId))
+                    },
+                    onOpenAssignment = { assignmentId ->
+                        if (entry.isResumed()) navController.navigate(Routes.assignmentDetails(assignmentId))
+                    }
+                )
+            }
+
+            // ---------- Task screens (argument: taskId) ----------
+
+            composable(
+                route = Routes.TASK_DETAILS,
+                arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
+            ) { entry ->
+                val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: 0
+                val task = viewModel.task(taskId)
+                val assignment = if (task != null) viewModel.assignment(task.assignmentId) else null
+
+                // task can be null for a moment right after it is deleted, so check first.
+                if (task != null && assignment != null) {
+                    TaskDetailsScreen(
+                        task = task,
+                        assignment = assignment,
+                        onBack = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        },
+                        onOpenAssignment = {
+                            if (entry.isResumed()) {
+                                navController.navigate(Routes.assignmentDetails(assignment.id)) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        onToggleCompleted = { viewModel.toggleCompleted(task.id) },
+                        onEdit = {
+                            if (entry.isResumed()) navController.navigate(Routes.editTask(task.id))
+                        },
+                        onDelete = {
+                            if (entry.isResumed()) navController.navigate(Routes.deleteTask(task.id))
+                        }
+                    )
+                }
+            }
+
+            composable(
+                route = Routes.EDIT_TASK,
+                arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
+            ) { entry ->
+                val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: 0
+                val task = viewModel.task(taskId)
+                val assignment = if (task != null) viewModel.assignment(task.assignmentId) else null
+
+                if (task != null && assignment != null) {
+                    EditTaskScreen(
+                        task = task,
+                        assignment = assignment,
+                        onSave = { name, targetDate ->
+                            if (entry.isResumed()) {
+                                viewModel.updateTask(task.id, name, targetDate)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        }
+                    )
+                }
+            }
+
+            composable(
+                route = Routes.DELETE_TASK,
+                arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
+            ) { entry ->
+                val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: 0
+                val task = viewModel.task(taskId)
+
+                if (task != null) {
+                    DeleteTaskScreen(
+                        task = task,
+                        onCancel = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        },
+                        onConfirmDelete = {
+                            if (entry.isResumed()) {
+                                viewModel.deleteTask(task.id)
+                                // Go back to Today (the deleted task's screens are removed from the back stack).
+                                navController.popBackStack(Routes.TODAY, inclusive = false)
+                            }
+                        }
+                    )
+                }
+            }
+
+            // ---------- Assignment screens (argument: assignmentId) ----------
+
+            composable(
+                route = Routes.ASSIGNMENT_DETAILS,
+                arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
+            ) { entry ->
+                val assignmentId = entry.arguments?.getInt(Routes.ARG_ASSIGNMENT_ID) ?: 0
+                val assignment = viewModel.assignment(assignmentId)
+
+                if (assignment != null) {
+                    AssignmentDetailsScreen(
+                        assignment = assignment,
+                        tasks = viewModel.tasksFor(assignment.id),
+                        onBack = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        },
+                        onOpenTask = { taskId ->
+                            if (entry.isResumed()) {
+                                navController.navigate(Routes.taskDetails(taskId)) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) },
+                        onDeleteAssignment = {
+                            if (entry.isResumed()) navController.navigate(Routes.deleteAssignment(assignment.id))
+                        }
+                    )
+                }
+            }
+
+            composable(
+                route = Routes.DELETE_ASSIGNMENT,
+                arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
+            ) { entry ->
+                val assignmentId = entry.arguments?.getInt(Routes.ARG_ASSIGNMENT_ID) ?: 0
+                val assignment = viewModel.assignment(assignmentId)
+
+                if (assignment != null) {
+                    DeleteAssignmentScreen(
+                        assignment = assignment,
+                        taskCount = viewModel.tasksFor(assignment.id).size,
+                        onCancel = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        },
+                        onConfirmDelete = {
+                            if (entry.isResumed()) {
+                                viewModel.deleteAssignment(assignment.id)
+                                navController.popBackStack(Routes.TODAY, inclusive = false)
+                            }
+                        }
+                    )
+                }
+            }
+
+            // ---------- Plan a new assignment (2 steps) ----------
+
+            composable(Routes.NEW_ASSIGNMENT) { entry ->
+                NewAssignmentScreen(
+                    onBack = {
+                        if (entry.isResumed()) navController.popBackStack()
+                    },
+                    onContinue = { title, subject, deadline ->
+                        if (entry.isResumed()) navController.navigate(Routes.addTasks(title, subject, deadline))
+                    }
+                )
+            }
+
+            composable(
+                route = Routes.ADD_TASKS,
+                arguments = listOf(
+                    navArgument(Routes.ARG_TITLE) { type = NavType.StringType },
+                    navArgument(Routes.ARG_SUBJECT) { type = NavType.StringType },
+                    navArgument(Routes.ARG_DEADLINE) { type = NavType.LongType }
+                )
+            ) { entry ->
+                val title = entry.arguments?.getString(Routes.ARG_TITLE) ?: ""
+                val subject = entry.arguments?.getString(Routes.ARG_SUBJECT) ?: ""
+                val deadline = LocalDate.ofEpochDay(entry.arguments?.getLong(Routes.ARG_DEADLINE) ?: 0L)
+
+                AddTasksScreen(
+                    assignmentTitle = title,
+                    deadline = deadline,
+                    onBack = {
+                        if (entry.isResumed()) navController.popBackStack()
+                    },
+                    onSavePlan = { drafts ->
+                        if (entry.isResumed()) {
+                            viewModel.createAssignment(title, subject, deadline, drafts)
+                            // Show the new tasks on Upcoming. Back from there goes to Today, not the form.
+                            navController.navigate(Routes.UPCOMING) {
+                                popUpTo(Routes.TODAY)
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
     }
 }
 
-/** Every screen is declared here, inside a single NavHost. The app starts at Today (decision A9). */
-@Composable
-private fun DueWiseNavHost(
-    navController: NavHostController,
-    viewModel: DueWiseViewModel,
-    modifier: Modifier = Modifier
-) {
-    NavHost(
-        navController = navController,
-        startDestination = Routes.TODAY,
-        modifier = modifier
-    ) {
+// True only when this screen is fully shown.
+// We check this before navigating, so fast double taps can't open the same screen twice
+// (the second tap happens while the screen is already changing, so it is ignored).
+private fun NavBackStackEntry.isResumed(): Boolean =
+    lifecycle.currentState == Lifecycle.State.RESUMED
 
-        // ---------- Bottom-navigation tabs ----------
-
-        composable(Routes.TODAY) { entry ->
-            TodayScreen(
-                today = LocalDate.now(),
-                nextTasks = viewModel.nextPendingTasks(),
-                completedTasks = viewModel.completedTasks(),
-                assignmentTitles = viewModel.assignmentTitles(),
-                onAddAssignment = { entry.ifCurrent { navController.navigate(Routes.NEW_ASSIGNMENT) } },
-                onOpenNotifications = { entry.ifCurrent { navController.navigate(Routes.NOTIFICATIONS) } },
-                onSeeAllUpcoming = { entry.ifCurrent { navController.navigateToTab(Routes.UPCOMING) } },
-                onOpenTask = { taskId -> entry.ifCurrent { navController.navigate(Routes.taskDetails(taskId)) } },
-                onToggleTask = viewModel::toggleCompleted
-            )
-        }
-
-        composable(Routes.UPCOMING) { entry ->
-            UpcomingScreen(
-                tasks = viewModel.pendingTasks(),
-                assignmentTitles = viewModel.assignmentTitles(),
-                onOpenTask = { taskId -> entry.ifCurrent { navController.navigate(Routes.taskDetails(taskId)) } },
-                onToggleTask = viewModel::toggleCompleted
-            )
-        }
-
-        composable(Routes.COMPLETED) { entry ->
-            CompletedScreen(
-                tasks = viewModel.completedTasks(),
-                assignmentTitles = viewModel.assignmentTitles(),
-                onOpenTask = { taskId -> entry.ifCurrent { navController.navigate(Routes.taskDetails(taskId)) } },
-                onToggleTask = viewModel::toggleCompleted
-            )
-        }
-
-        composable(Routes.SETTINGS) { entry ->
-            SettingsScreen(
-                onLogOut = {
-                    entry.ifCurrent {
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                }
-            )
-        }
-
-        // ---------- Sign in (reached after Log Out) ----------
-
-        composable(Routes.LOGIN) { entry ->
-            LoginScreen(
-                onSignIn = {
-                    entry.ifCurrent {
-                        navController.navigate(Routes.TODAY) {
-                            popUpTo(Routes.LOGIN) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                }
-            )
-        }
-
-        // ---------- Notifications ----------
-
-        composable(Routes.NOTIFICATIONS) { entry ->
-            NotificationsScreen(
-                reminders = viewModel.reminders(),
-                onBack = { entry.ifCurrent { navController.popBackStack() } },
-                onOpenTask = { taskId -> entry.ifCurrent { navController.navigate(Routes.taskDetails(taskId)) } }
-            )
-        }
-
-        // ---------- Task screens ----------
-
-        composable(
-            route = Routes.TASK_DETAILS,
-            arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
-        ) { entry ->
-            val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: return@composable
-            val task = viewModel.task(taskId) ?: return@composable // deleted while this screen is leaving
-            val assignment = viewModel.assignment(task.assignmentId) ?: return@composable
-
-            TaskDetailsScreen(
-                task = task,
-                assignment = assignment,
-                onBack = { entry.ifCurrent { navController.popBackStack() } },
-                onOpenAssignment = {
-                    entry.ifCurrent {
-                        // Came here from this assignment's details? Go back instead of stacking it again.
-                        if (navController.previousIs(Routes.ASSIGNMENT_DETAILS, Routes.ARG_ASSIGNMENT_ID, assignment.id)) {
-                            navController.popBackStack()
-                        } else {
-                            navController.navigate(Routes.assignmentDetails(assignment.id))
-                        }
-                    }
-                },
-                onToggleCompleted = { viewModel.toggleCompleted(task.id) },
-                onEdit = { entry.ifCurrent { navController.navigate(Routes.editTask(task.id)) } },
-                onDelete = { entry.ifCurrent { navController.navigate(Routes.deleteTask(task.id)) } }
-            )
-        }
-
-        composable(
-            route = Routes.EDIT_TASK,
-            arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
-        ) { entry ->
-            val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: return@composable
-            val task = viewModel.task(taskId) ?: return@composable
-            val assignment = viewModel.assignment(task.assignmentId) ?: return@composable
-
-            EditTaskScreen(
-                task = task,
-                assignment = assignment,
-                onSave = { name, targetDate ->
-                    entry.ifCurrent {
-                        viewModel.updateTask(task.id, name, targetDate)
-                        navController.popBackStack()
-                    }
-                },
-                onCancel = { entry.ifCurrent { navController.popBackStack() } }
-            )
-        }
-
-        composable(
-            route = Routes.DELETE_TASK,
-            arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.IntType })
-        ) { entry ->
-            val taskId = entry.arguments?.getInt(Routes.ARG_TASK_ID) ?: return@composable
-            val task = viewModel.task(taskId) ?: return@composable
-
-            DeleteTaskScreen(
-                task = task,
-                onCancel = { entry.ifCurrent { navController.popBackStack() } },
-                onConfirmDelete = {
-                    entry.ifCurrent {
-                        viewModel.deleteTask(task.id)
-                        navController.popBackStack(Routes.TODAY, inclusive = false)
-                    }
-                }
-            )
-        }
-
-        // ---------- Assignment screens ----------
-
-        composable(
-            route = Routes.ASSIGNMENT_DETAILS,
-            arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
-        ) { entry ->
-            val assignmentId = entry.arguments?.getInt(Routes.ARG_ASSIGNMENT_ID) ?: return@composable
-            val assignment = viewModel.assignment(assignmentId) ?: return@composable
-
-            AssignmentDetailsScreen(
-                assignment = assignment,
-                tasks = viewModel.tasksFor(assignment.id),
-                onBack = { entry.ifCurrent { navController.popBackStack() } },
-                onOpenTask = { taskId ->
-                    entry.ifCurrent {
-                        // Came here from this task's details? Go back instead of stacking it again.
-                        if (navController.previousIs(Routes.TASK_DETAILS, Routes.ARG_TASK_ID, taskId)) {
-                            navController.popBackStack()
-                        } else {
-                            navController.navigate(Routes.taskDetails(taskId))
-                        }
-                    }
-                },
-                onToggleTask = viewModel::toggleCompleted,
-                onDeleteAssignment = { entry.ifCurrent { navController.navigate(Routes.deleteAssignment(assignment.id)) } }
-            )
-        }
-
-        composable(
-            route = Routes.DELETE_ASSIGNMENT,
-            arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
-        ) { entry ->
-            val assignmentId = entry.arguments?.getInt(Routes.ARG_ASSIGNMENT_ID) ?: return@composable
-            val assignment = viewModel.assignment(assignmentId) ?: return@composable
-
-            DeleteAssignmentScreen(
-                assignment = assignment,
-                taskCount = viewModel.tasksFor(assignment.id).size,
-                onCancel = { entry.ifCurrent { navController.popBackStack() } },
-                onConfirmDelete = {
-                    entry.ifCurrent {
-                        viewModel.deleteAssignment(assignment.id)
-                        navController.popBackStack(Routes.TODAY, inclusive = false)
-                    }
-                }
-            )
-        }
-
-        // ---------- Plan a new assignment (two steps) ----------
-
-        composable(Routes.NEW_ASSIGNMENT) { entry ->
-            NewAssignmentScreen(
-                defaultDeadline = LocalDate.now().plusWeeks(2),
-                onBack = { entry.ifCurrent { navController.popBackStack() } },
-                onContinue = { title, subject, deadline ->
-                    entry.ifCurrent { navController.navigate(Routes.addTasks(title, subject, deadline)) }
-                }
-            )
-        }
-
-        composable(
-            route = Routes.ADD_TASKS,
-            arguments = listOf(
-                navArgument(Routes.ARG_TITLE) { type = NavType.StringType },
-                navArgument(Routes.ARG_SUBJECT) { type = NavType.StringType },
-                navArgument(Routes.ARG_DEADLINE) { type = NavType.LongType }
-            )
-        ) { entry ->
-            val arguments = entry.arguments ?: return@composable
-            val title = arguments.getString(Routes.ARG_TITLE).orEmpty()
-            val subject = arguments.getString(Routes.ARG_SUBJECT).orEmpty()
-            val deadline = LocalDate.ofEpochDay(arguments.getLong(Routes.ARG_DEADLINE))
-
-            AddTasksScreen(
-                assignmentTitle = title,
-                deadline = deadline,
-                today = LocalDate.now(),
-                onBack = { entry.ifCurrent { navController.popBackStack() } },
-                onSavePlan = { drafts ->
-                    entry.ifCurrent {
-                        viewModel.createAssignment(title, subject, deadline, drafts)
-                        // Show the result on Upcoming; Back from there returns to Today, not to the form.
-                        navController.navigate(Routes.UPCOMING) {
-                            popUpTo(Routes.TODAY) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                    }
-                }
-            )
-        }
-    }
-}
-
-/**
- * Runs a navigation action only while this screen is the one fully shown (RESUMED).
- * Taps that arrive during a screen transition are ignored, so rapid tapping cannot open
- * the same screen twice or pop the back stack more than once.
- */
-private fun NavBackStackEntry.ifCurrent(action: () -> Unit) {
-    if (lifecycle.currentState == Lifecycle.State.RESUMED) action()
-}
-
-/** Switches bottom-navigation tabs without stacking duplicate tab screens. */
-private fun NavHostController.navigateToTab(route: String) {
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+// Switches bottom bar tabs without stacking the same tab screen again.
+private fun goToTab(navController: NavHostController, route: String) {
+    navController.navigate(route) {
+        popUpTo(Routes.TODAY) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
-}
-
-/** True if the screen under the current one is [route] with the given Int argument. */
-private fun NavHostController.previousIs(route: String, argName: String, argValue: Int): Boolean {
-    val previous = previousBackStackEntry ?: return false
-    return previous.destination.route == route && previous.arguments?.getInt(argName) == argValue
 }

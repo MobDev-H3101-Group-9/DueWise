@@ -16,8 +16,8 @@ import com.duewise.app.ui.theme.AccentBlue
 import com.duewise.app.ui.theme.CardSurface
 import com.duewise.app.ui.theme.TextSecondary
 
-/** The four bottom-navigation destinations from the prototype. */
-enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
+// The 4 tabs in the bottom bar.
+enum class BottomTab(val route: String, val label: String, val icon: ImageVector) {
     Today(Routes.TODAY, "Today", Icons.Outlined.Home),
     Upcoming(Routes.UPCOMING, "Upcoming", Icons.Outlined.DateRange),
     Completed(Routes.COMPLETED, "Completed", Icons.Outlined.Check),
@@ -25,12 +25,9 @@ enum class TopLevelTab(val route: String, val label: String, val icon: ImageVect
 }
 
 @Composable
-fun DueWiseBottomBar(
-    currentRoute: String?,
-    onTabSelected: (String) -> Unit
-) {
+fun BottomNavBar(currentRoute: String?, onTabSelected: (String) -> Unit) {
     NavigationBar(containerColor = CardSurface) {
-        TopLevelTab.entries.forEach { tab ->
+        for (tab in BottomTab.entries) {
             NavigationBarItem(
                 selected = currentRoute == tab.route,
                 onClick = { onTabSelected(tab.route) },

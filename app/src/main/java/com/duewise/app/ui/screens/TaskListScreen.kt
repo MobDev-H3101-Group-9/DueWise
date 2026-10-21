@@ -16,7 +16,7 @@ import com.duewise.app.ui.components.ScreenHeader
 import com.duewise.app.ui.components.TaskCard
 import com.duewise.app.ui.theme.TextSecondary
 
-/** Upcoming tab: every pending task, earliest target date first. */
+// Upcoming tab: all unfinished tasks.
 @Composable
 fun UpcomingScreen(
     tasks: List<Task>,
@@ -35,7 +35,7 @@ fun UpcomingScreen(
     )
 }
 
-/** Completed tab: finished tasks. Tapping ✓ restores a task to pending (undo). */
+// Completed tab: finished tasks. Tapping ✓ puts a task back to not done.
 @Composable
 fun CompletedScreen(
     tasks: List<Task>,
@@ -54,7 +54,7 @@ fun CompletedScreen(
     )
 }
 
-/** Shared layout for the Upcoming and Completed tabs: title, hint, then a list of task cards. */
+// Same layout for Upcoming and Completed: title, hint, then the list of task cards.
 @Composable
 private fun TaskListScreen(
     title: String,
@@ -70,14 +70,13 @@ private fun TaskListScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") { ScreenHeader(title = title) }
-        item(key = "hint") {
-            Text(text = hint, style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
-        }
+        item { ScreenHeader(title = title) }
+        item { Text(text = hint, style = MaterialTheme.typography.bodyLarge, color = TextSecondary) }
+
         if (tasks.isEmpty()) {
-            item(key = "empty") { EmptyState(emptyMessage) }
+            item { EmptyState(emptyMessage) }
         } else {
-            items(tasks, key = { it.id }) { task ->
+            items(tasks) { task ->
                 TaskCard(
                     task = task,
                     assignmentTitle = assignmentTitles[task.assignmentId],

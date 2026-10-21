@@ -1,7 +1,5 @@
 package com.duewise.app.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,35 +9,35 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.duewise.app.ui.theme.CardSurface
 import com.duewise.app.ui.theme.PrimaryDark
 import com.duewise.app.ui.theme.TextPrimary
 
-/** Filled main action of a screen, e.g. "Continue to Tasks". Always full width, 56dp tall. */
+// Dark filled button for the main action of a screen, e.g. "Continue to Tasks".
 @Composable
 fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    containerColor: Color = PrimaryDark
+    color: Color = PrimaryDark
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
+            .padding(top = 8.dp)
             .height(56.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
+            containerColor = color,
             contentColor = CardSurface,
-            disabledContainerColor = containerColor.copy(alpha = 0.35f),
+            disabledContainerColor = color.copy(alpha = 0.35f),
             disabledContentColor = CardSurface
         )
     ) {
@@ -47,32 +45,24 @@ fun PrimaryButton(
     }
 }
 
-/**
- * White outlined action, e.g. "Edit task" or "Delete task".
- * Red text is used only for delete actions (decision A12).
- */
+// White outlined button, e.g. "Edit task". Use red text only for delete actions.
 @Composable
 fun OutlinedActionButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     textColor: Color = TextPrimary,
     centered: Boolean = false
 ) {
-    DueWiseCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-        Row(
+    DueWiseCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (textColor == TextPrimary) FontWeight.Normal else FontWeight.SemiBold,
+            color = textColor,
+            textAlign = if (centered) TextAlign.Center else TextAlign.Start,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (textColor == TextPrimary) FontWeight.Normal else FontWeight.SemiBold,
-                color = textColor
-            )
-        }
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+        )
     }
 }

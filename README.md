@@ -34,7 +34,7 @@ app/src/main/java/com/duewise/app/
 ├── ui/
 │   ├── DueWiseViewModel.kt      Shared state (assignments, tasks) and the events that change it
 │   ├── components/              Reusable composables
-│   │   ├── Cards.kt             DueWiseCard, TaskCard, CompletionToggle
+│   │   ├── Cards.kt             DueWiseCard, TaskCard
 │   │   ├── Buttons.kt           PrimaryButton, OutlinedActionButton
 │   │   ├── Inputs.kt            LabeledTextField, DateField (+ calendar dialog)
 │   │   ├── Dialogs.kt           ConfirmDialog
@@ -57,7 +57,8 @@ app/src/main/java/com/duewise/app/
 - **Screens** only draw the UI and report user events through lambdas (`onOpenTask`, `onSave`…). They never call the NavController or change shared data.
 - **DueWiseNavHost.kt** receives those events, updates the ViewModel, and makes the navigation call.
 - **DueWiseViewModel** holds the assignments and tasks as Compose state lists, so every screen showing them updates automatically (recomposition).
-- **Local UI state** (form drafts, dialog visibility, password visibility) lives inside each screen with `rememberSaveable`, so it survives rotation.
+- **Local UI state** (form drafts, dialog visibility, password visibility) lives inside each screen with `remember`. Step 1 of a new assignment uses `rememberSaveable`, so the typed values are still there after going to step 2 and back.
+- The app is portrait-only (set in `AndroidManifest.xml`), like the prototype.
 
 ---
 
@@ -85,9 +86,8 @@ Main task flow: **Today → + Add assignment → New assignment → Continue to 
 
 - One `NavController` (`rememberNavController()` in `DueWiseApp`) and one `NavHost`.
 - Every navigation call is inside a user event handler; nothing navigates during recomposition.
-- `ifCurrent { … }` runs a navigation call only when the screen is fully shown (`RESUMED`). Taps during a transition are ignored, so double taps cannot open a screen twice or pop twice.
+- Before each navigation call we check `entry.isResumed()` (the screen is fully shown). A second fast tap happens while the screen is already changing, so it is ignored. Double taps cannot open a screen twice or go back twice.
 - Bottom-bar tabs use `launchSingleTop`, `saveState` and `restoreState`, so tabs never stack.
-- Task details ↔ Assignment details goes **back** instead of stacking a loop when you came from that same screen.
 - Arguments are primitives only: `Int` ids, `String` title and subject (URL-encoded), and the deadline as a `Long` epoch day.
 
 ### What changes state vs. what is movement only
@@ -107,7 +107,7 @@ Main task flow: **Today → + Add assignment → New assignment → Continue to 
 
 | # | Decision | Where in code |
 | --- | --- | --- |
-| A1 | Tap the circle = complete/undo; tap the card = open Task details | `TaskCard`, `CompletionToggle` |
+| A1 | Tap the circle = complete/undo; tap the card = open Task details | `TaskCard` |
 | A2 | No ⋮ menu on cards | `TaskCard` |
 | A3 | Today shows the next 3 pending tasks + completed + "See all" | `TodayScreen`, `nextPendingTasks()` |
 | A4 | Every list sorted by target date | `DueWiseViewModel` |
@@ -123,6 +123,8 @@ Main task flow: **Today → + Add assignment → New assignment → Continue to 
 Notes:
 - Login checks only that both fields are filled in. Real authentication and the Google/Apple/Phone options are deferred, as stated in our MS1 scope.
 - Data is kept in memory while the app runs (no database), matching the MS1 scope.
+- Notifications show the next 2 pending tasks (open Task details) and the assignment with the nearest deadline (opens Assignment details).
+- A task's target date must be on or before its assignment's final deadline; the Edit and Add task screens show a red message otherwise.
 - Research Paper sample values (subject **English**, deadline **September 29, 2026**) are placeholders. Change them in `data/SampleData.kt` if the group picked different ones.
 
 ---
@@ -137,9 +139,9 @@ Run on the emulator. Tick each item; if something fails, fix it and run the whol
 - [ ] **Back stack:** Today → task → assignment name → a task in the list → press Back repeatedly; each press returns one screen, ending on Today, then the app closes.
 - [ ] **Rapid tapping:** double-tap / triple-tap a task card, "+ Add assignment", "Edit task" and the bell. Only one screen opens each time (one Back returns to the previous screen).
 - [ ] **Rapid back:** triple-tap the back arrow on Edit task. Only one screen is popped.
-- [ ] **User-triggered only:** open the app and rotate the emulator; no screen opens by itself.
+- [ ] **User-triggered only:** open the app and wait; no screen opens by itself. Rotate the emulator; the app stays in portrait and nothing resets.
 - [ ] **Arguments:** open Find sources, Create wireframes and Write results from Today; each shows its own name, assignment and dates. Plan a new assignment named "Math Quiz / Ch. 3" (with a slash) and confirm the title appears correctly on step 2.
-- [ ] **State kept:** type a title on New assignment → Continue → Back; the title is still there. Rotate on Edit task; the typed draft stays.
+- [ ] **State kept:** type a title on New assignment → Continue → Back; the title is still there.
 - [ ] **State consistent:** complete "Find sources" on Upcoming → it shows ✓ on Today and Completed and "Mark as not done" on its Task details.
 - [ ] **Rapid interaction:** tap the ○ on one card quickly 6 times; it ends in a sensible state, no crash.
 

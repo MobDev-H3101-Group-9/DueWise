@@ -9,7 +9,7 @@ import com.duewise.app.ui.theme.CardSurface
 import com.duewise.app.ui.theme.DangerRed
 import com.duewise.app.ui.theme.TextPrimary
 
-/** A yes/no confirmation dialog. The caller decides when it is visible. */
+// Simple "Are you sure?" dialog. The screen that uses it decides when it is shown.
 @Composable
 fun ConfirmDialog(
     title: String,

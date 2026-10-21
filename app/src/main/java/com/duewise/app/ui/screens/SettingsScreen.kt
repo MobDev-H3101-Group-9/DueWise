@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,10 +23,11 @@ import com.duewise.app.ui.theme.DangerRed
 import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
 
-/** Settings tab: account and app information, plus Log Out (with a confirmation dialog). */
+// Settings tab: account info, about, and Log Out (asks for confirmation first).
 @Composable
 fun SettingsScreen(onLogOut: () -> Unit) {
-    var showLogOutDialog by rememberSaveable { mutableStateOf(false) }
+    // State: is the "Log out?" dialog showing?
+    var showLogOutDialog by remember { mutableStateOf(false) }
 
     ScrollScreen {
         ScreenHeader(title = "Settings")
@@ -62,8 +63,7 @@ fun SettingsScreen(onLogOut: () -> Unit) {
             text = "Log Out",
             onClick = { showLogOutDialog = true },
             textColor = DangerRed,
-            centered = true,
-            modifier = Modifier.padding(top = 8.dp)
+            centered = true
         )
     }
 

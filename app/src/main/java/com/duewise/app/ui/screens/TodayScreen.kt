@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,13 +33,9 @@ import com.duewise.app.ui.theme.TextSecondary
 import com.duewise.app.util.toDayHeader
 import java.time.LocalDate
 
-/**
- * Entry screen (dashboard). Shows the next three pending tasks, the completed tasks,
- * and the main action: + Add assignment.
- */
+// First screen of the app (dashboard): next 3 tasks, completed tasks, and + Add assignment.
 @Composable
 fun TodayScreen(
-    today: LocalDate,
     nextTasks: List<Task>,
     completedTasks: List<Task>,
     assignmentTitles: Map<Int, String>,
@@ -56,22 +50,41 @@ fun TodayScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") {
-            TodayHeader(today = today, onOpenNotifications = onOpenNotifications)
+        // Header: logo, app name, bell, and today's date
+        item {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AppLogo(size = 44.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = "DueWise",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = TextPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onOpenNotifications) {
+                        Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = AccentBlue)
+                    }
+                }
+                Text(
+                    text = LocalDate.now().toDayHeader(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TextSecondary
+                )
+            }
         }
 
-        item(key = "add-assignment") {
+        item {
             OutlinedActionButton(text = "+ Add assignment", onClick = onAddAssignment, textColor = AccentBlue)
         }
 
-        item(key = "upcoming-label") { SectionLabel("Upcoming tasks") }
+        // Upcoming tasks
+        item { SectionLabel("Upcoming tasks") }
 
         if (nextTasks.isEmpty()) {
-            item(key = "upcoming-empty") {
-                EmptyState("No pending tasks. Tap + Add assignment to plan your next one.")
-            }
+            item { EmptyState("No pending tasks. Tap + Add assignment to plan your next one.") }
         } else {
-            items(nextTasks, key = { "upcoming-${it.id}" }) { task ->
+            items(nextTasks) { task ->
                 TaskCard(
                     task = task,
                     assignmentTitle = assignmentTitles[task.assignmentId],
@@ -79,7 +92,7 @@ fun TodayScreen(
                     onOpen = { onOpenTask(task.id) }
                 )
             }
-            item(key = "see-all") {
+            item {
                 TextButton(onClick = onSeeAllUpcoming) {
                     Text(
                         text = "See all in Upcoming →",
@@ -91,12 +104,13 @@ fun TodayScreen(
             }
         }
 
-        item(key = "completed-label") { SectionLabel("Completed tasks") }
+        // Completed tasks
+        item { SectionLabel("Completed tasks") }
 
         if (completedTasks.isEmpty()) {
-            item(key = "completed-empty") { EmptyState("Tasks you finish will appear here.") }
+            item { EmptyState("Tasks you finish will appear here.") }
         } else {
-            items(completedTasks, key = { "completed-${it.id}" }) { task ->
+            items(completedTasks) { task ->
                 TaskCard(
                     task = task,
                     assignmentTitle = assignmentTitles[task.assignmentId],
@@ -105,34 +119,5 @@ fun TodayScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun TodayHeader(today: LocalDate, onOpenNotifications: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AppLogo(size = 44.dp)
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = "DueWise",
-                style = MaterialTheme.typography.headlineMedium,
-                color = TextPrimary,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onOpenNotifications) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Notifications",
-                    tint = AccentBlue
-                )
-            }
-        }
-        Text(
-            text = today.toDayHeader(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary,
-            modifier = Modifier.padding(top = 4.dp)
-        )
     }
 }

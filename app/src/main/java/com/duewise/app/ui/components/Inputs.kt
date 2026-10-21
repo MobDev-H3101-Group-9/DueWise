@@ -16,20 +16,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.duewise.app.ui.theme.AccentBlue
@@ -38,74 +34,59 @@ import com.duewise.app.ui.theme.CardSurface
 import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
 import com.duewise.app.util.toDisplayDate
-import com.duewise.app.util.toUtcMillis
-import com.duewise.app.util.utcMillisToLocalDate
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 
-private val FieldShape = RoundedCornerShape(14.dp)
-
-/** A text field with an uppercase label above it, styled like the prototype's white input boxes. */
+// Text field with an uppercase label above it.
 @Composable
 fun LabeledTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    modifier: Modifier = Modifier,
-    keyboardOptions: KeyboardOptions = KeyboardOptions(
-        capitalization = KeyboardCapitalization.Sentences,
-        imeAction = ImeAction.Next
-    ),
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingContent: (@Composable () -> Unit)? = null
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionLabel(text = label)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel(label)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             placeholder = { Text(placeholder, color = TextSecondary) },
             singleLine = true,
-            shape = FieldShape,
+            shape = RoundedCornerShape(14.dp),
             keyboardOptions = keyboardOptions,
             visualTransformation = visualTransformation,
             trailingIcon = trailingContent,
-            textStyle = MaterialTheme.typography.bodyLarge,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = CardSurface,
                 unfocusedContainerColor = CardSurface,
                 focusedBorderColor = AccentBlue,
-                unfocusedBorderColor = CardBorder,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                unfocusedBorderColor = CardBorder
             ),
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
-/**
- * A labeled box that shows a date and opens a calendar dialog when tapped.
- * Whether the dialog is visible is a state variable inside this composable.
- *
- * @param latestAllowed dates after this one cannot be picked (e.g. a task cannot be planned
- *   after its assignment's final deadline). Null means any date is allowed.
- */
+// Shows a date in a box. Tapping the box opens a calendar dialog.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateField(
     label: String,
     date: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier,
-    latestAllowed: LocalDate? = null
+    onDateSelected: (LocalDate) -> Unit
 ) {
-    var showPicker by rememberSaveable { mutableStateOf(false) }
+    // State: is the calendar dialog open?
+    var showPicker by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionLabel(text = label)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel(label)
         DueWiseCard(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -114,63 +95,37 @@ fun DateField(
                     color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
-                Icon(
-                    imageVector = Icons.Outlined.DateRange,
-                    contentDescription = "Choose a date",
-                    tint = AccentBlue
-                )
+                Icon(Icons.Outlined.DateRange, contentDescription = "Choose a date", tint = AccentBlue)
             }
         }
     }
 
     if (showPicker) {
-        DueWiseDatePickerDialog(
-            initialDate = date,
-            latestAllowed = latestAllowed,
-            onConfirm = { picked ->
-                onDateSelected(picked)
-                showPicker = false
-            },
-            onDismiss = { showPicker = false }
+        // The DatePicker works with milliseconds (UTC), so we convert to and from LocalDate.
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         )
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DueWiseDatePickerDialog(
-    initialDate: LocalDate,
-    latestAllowed: LocalDate?,
-    onConfirm: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val selectableDates = remember(latestAllowed) {
-        object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                latestAllowed == null || utcTimeMillis <= latestAllowed.toUtcMillis()
-        }
-    }
-    val pickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDate.toUtcMillis(),
-        selectableDates = selectableDates
-    )
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = { pickerState.selectedDateMillis?.let { onConfirm(utcMillisToLocalDate(it)) } },
-                enabled = pickerState.selectedDateMillis != null
-            ) {
-                Text("OK", color = AccentBlue)
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = pickerState.selectedDateMillis
+                    if (millis != null) {
+                        onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                    }
+                    showPicker = false
+                }) {
+                    Text("OK", color = AccentBlue)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) {
+                    Text("Cancel", color = TextPrimary)
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextPrimary)
-            }
+        ) {
+            DatePicker(state = pickerState)
         }
-    ) {
-        DatePicker(state = pickerState)
     }
 }
