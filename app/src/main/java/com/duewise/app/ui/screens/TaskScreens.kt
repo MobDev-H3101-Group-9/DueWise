@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,13 +58,10 @@ fun TaskDetailsScreen(
         LabeledValue(label = "Target date", value = task.targetDate.toDisplayDate())
         LabeledValue(label = "Assignment deadline", value = assignment.deadline.toDisplayDate())
 
-        TextButton(onClick = onToggleCompleted) {
-            Text(
-                text = if (task.isCompleted) "↺ Mark as not done" else "✓ Mark task completed",
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextPrimary
+        OutlinedActionButton(
+            text = if (task.isCompleted) "↺ Mark as not done" else "✓ Mark task completed",
+            onToggleCompleted
             )
-        }
 
         OutlinedActionButton(text = "Edit task", onClick = onEdit)
         OutlinedActionButton(text = "Delete task", onClick = onDelete, textColor = DangerRed)
