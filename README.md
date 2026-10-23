@@ -1,163 +1,8 @@
 # DueWise
 
-Student Assignment Planner  
-MO-IT114 Mobile Development Fundamentals
+DueWise is a student assignment planner designed to help college students manage larger assignments by breaking them into smaller tasks with their own target dates.
 
-## About the Project
-
-DueWise is an Android student assignment planner designed to help students manage larger school assignments by breaking them into smaller tasks with their own target dates.
-
-Instead of only recording the final deadline, students can create an assignment, divide it into smaller tasks, set target dates, and track which tasks have already been completed.
-
-The project is built using Kotlin and Jetpack Compose.
-
-## Main Features
-
-DueWise currently allows the student to:
-
-- View pending tasks from the Today screen
-- View upcoming tasks ordered by target date
-- View completed tasks
-- Create a new assignment
-- Set an assignment deadline
-- Break an assignment into smaller tasks
-- Set a target date for each task
-- View task details
-- Edit a task name or target date
-- Mark a task as completed or incomplete
-- Delete a task with confirmation
-- View assignment details
-- Delete an assignment with confirmation
-- View basic task reminders through the Notifications screen
-
-The app uses one student user and focuses on individual assignment planning.
-
-## Main User Flow
-
-The primary task flow is:
-
-`Today → Add Assignment → Enter Assignment Details → Add Tasks → Set Target Dates → Save Plan → View Upcoming Tasks`
-
-After creating the plan, the student can open a task to edit it, mark it as completed, or delete it.
-
-## Project Structure
-
-The main source files are located under:
-
-`app/src/main/java/com/duewise/app/`
-
-### Data
-
-`Models.kt`
-
-Contains the main data classes:
-
-- Assignment
-- Task
-- TaskDraft
-
-`SampleData.kt`
-
-Contains sample assignments and tasks used when the app starts.
-
-### Navigation
-
-`Routes.kt`
-
-Contains the navigation routes used by the application.
-
-`DueWiseNavHost.kt`
-
-Connects the screens and controls navigation between them.
-
-`BottomNavBar.kt`
-
-Contains the main navigation tabs:
-
-- Today
-- Upcoming
-- Completed
-- Settings
-
-### UI
-
-`DueWiseViewModel.kt`
-
-Stores the current assignments and tasks and contains the functions used to create, edit, complete, and delete them.
-
-The `screens` folder contains the different screens of the app, including:
-
-- Today
-- Upcoming
-- Completed
-- Task Details
-- Assignment Details
-- New Assignment
-- Add Tasks
-- Notifications
-- Settings
-- Login
-
-The `components` folder contains reusable UI elements such as buttons, task cards, text fields, dialogs, and layouts.
-
-## Task and Assignment Dates
-
-DueWise uses two different types of dates:
-
-- Final Deadline: The date when the entire assignment is due.
-- Target Date: The planned date for completing one smaller task.
-
-A task's target date should not be later than the assignment's final deadline.
-
-## Task Status
-
-A task can be either:
-
-- Pending
-- Completed
-
-When a student marks a task as completed, its status is updated and it appears in the Completed section.
-
-The student can also restore a completed task if it was marked as finished by mistake.
-
-## Current Scope
-
-The current version focuses on the main assignment-planning workflow.
-
-The following features are not included in the current project:
-
-- Automatic task generation
-- AI-generated schedules
-- Teacher or administrator accounts
-- Group collaboration
-- Messaging
-- Grade tracking
-- Study timers
-- School portal connections
-- External calendar synchronization
-- Online payments
-
-Authentication is currently represented only through the user interface. The project does not yet use a real authentication service.
-
-The current application also stores its working data in memory and does not yet use permanent database storage.
-
-## Technology Used
-
-- Kotlin
-- Jetpack Compose
-- Android Studio
-- Material 3
-- Navigation Compose
-
-The project currently targets Android smartphones in portrait orientation.
-
-## Running the Project
-
-1. Open the project in Android Studio.
-2. Wait for Gradle sync to finish.
-3. Select an Android emulator or connected Android device.
-4. Run the application.
-5. The app will open on the Today screen.
+Instead of only keeping track of the final deadline, students can create an assignment, divide it into smaller tasks, set target dates, and monitor which tasks are still pending or already completed.
 
 ## Group Members
 
@@ -170,3 +15,85 @@ The project currently targets Android smartphones in portrait orientation.
 
 MO-IT114 Mobile Development Fundamentals  
 Bachelor of Science in Information Technology
+
+## Main Features
+
+DueWise currently allows the student to:
+
+- Create an assignment
+- Set the assignment's final deadline
+- Break an assignment into smaller tasks
+- Set target dates for each task
+- View pending and upcoming tasks
+- View completed tasks
+- View assignment and task details
+- Edit task information
+- Mark tasks as completed or incomplete
+- Delete tasks with confirmation
+- Delete assignments with confirmation
+- View basic task reminders
+
+## How to Run the App
+
+### Requirements
+
+- Android Studio
+- Android emulator or physical Android device
+- Internet connection during the initial Gradle setup
+
+### Steps
+
+1. Clone or download this repository.
+2. Open the project in Android Studio.
+3. Wait for Gradle to finish syncing.
+4. Select an Android emulator or connect an Android device.
+5. Select the `app` run configuration.
+6. Click **Run**.
+7. The DueWise application will launch on the selected device.
+
+No additional account, database, or external service setup is currently required.
+
+## Technologies Used
+
+- Kotlin
+- Jetpack Compose
+- Material 3
+- Navigation Compose
+- Android Studio
+
+## Changes from Milestone 1 Prototype
+
+The Milestone 2 version was developed based on the structure and user flow created during Milestone 1.
+
+The following changes were made:
+
+- Converted the Milestone 1 Figma prototype into a working Android application using Kotlin and Jetpack Compose.
+- Added working assignment creation instead of prototype-only sample interactions.
+- Added the ability to break assignments into smaller tasks.
+- Added target-date selection for individual tasks.
+- Added working task completion and undo completion.
+- Added task editing and deletion.
+- Added assignment deletion with confirmation.
+- Connected the Today, Upcoming, Completed, Notifications, Assignment Details, and Task Details screens through working navigation.
+- Added visible task state changes when tasks are completed, restored, edited, or deleted.
+- Simplified parts of the code to match the programming concepts covered in the course.
+
+These changes were made to turn the Milestone 1 prototype into a functional mobile application while keeping the original focus on individual assignment planning.
+
+## Current Scope
+
+DueWise currently focuses on individual student assignment planning.
+
+The current version does not include:
+
+- AI-generated task plans
+- Automatic task scheduling
+- Teacher or administrator accounts
+- Group collaboration
+- Messaging
+- Grade tracking
+- School portal connections
+- External calendar synchronization
+- Permanent online account storage
+
+The application currently uses sample and in-memory data for its main assignment and task functions.
