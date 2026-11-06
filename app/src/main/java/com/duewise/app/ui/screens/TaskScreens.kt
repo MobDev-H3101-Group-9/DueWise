@@ -54,7 +54,14 @@ fun TaskDetailsScreen(
             Text(text = assignment.subject, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         }
 
-        LabeledValue(label = "Status", value = if (task.isCompleted) "Completed" else "Pending")
+        val status = if (task.isCompleted) {
+            "Completed"
+        } else if (task.targetDate.isBefore(LocalDate.now())) {
+            "Overdue"
+        } else {
+            "Pending"
+        }
+        LabeledValue(label = "Status", value = status)
         LabeledValue(label = "Target date", value = task.targetDate.toDisplayDate())
         LabeledValue(label = "Assignment deadline", value = assignment.deadline.toDisplayDate())
 

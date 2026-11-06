@@ -27,9 +27,11 @@ import com.duewise.app.data.Task
 import com.duewise.app.ui.theme.AccentBlue
 import com.duewise.app.ui.theme.CardBorder
 import com.duewise.app.ui.theme.CardSurface
+import com.duewise.app.ui.theme.DangerRed
 import com.duewise.app.ui.theme.TextPrimary
 import com.duewise.app.ui.theme.TextSecondary
 import com.duewise.app.util.toDisplayDate
+import java.time.LocalDate
 
 // White rounded card with a gray border, used for cards and outlined buttons.
 // If onClick is given, the whole card can be tapped.
@@ -64,6 +66,8 @@ fun TaskCard(
     onToggleCompleted: () -> Unit,
     onOpen: () -> Unit
 ) {
+    // A task is overdue if it is not done and its target date is before today.
+    val isOverdue = !task.isCompleted && task.targetDate.isBefore(LocalDate.now())
     DueWiseCard(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 14.dp),
@@ -98,8 +102,11 @@ fun TaskCard(
                     text = task.targetDate.toDisplayDate(),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = AccentBlue
+                    color = if (isOverdue) DangerRed else AccentBlue
                 )
+                if (isOverdue) {
+                    Text(text = "OVERDUE", style = MaterialTheme.typography.labelMedium, color = DangerRed)
+                }
             }
         }
     }
