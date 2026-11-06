@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.duewise.app.ui.DueWiseViewModel
 import com.duewise.app.ui.screens.AddTasksScreen
 import com.duewise.app.ui.screens.AssignmentDetailsScreen
+import com.duewise.app.ui.screens.AssignmentsScreen
 import com.duewise.app.ui.screens.CompletedScreen
 import com.duewise.app.ui.screens.DeleteAssignmentScreen
 import com.duewise.app.ui.screens.DeleteTaskScreen
@@ -37,7 +38,7 @@ import java.time.LocalDate
 fun DueWiseApp(viewModel: DueWiseViewModel) {
     val navController = rememberNavController()
 
-    // Show the bottom bar only on the 4 tab screens.
+    // Show the bottom bar only on the tab screens.
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
     val showBottomBar = BottomTab.entries.any { it.route == currentRoute }
@@ -90,6 +91,19 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                         if (entry.isResumed()) navController.navigate(Routes.taskDetails(taskId))
                     },
                     onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) }
+                )
+            }
+
+            composable(Routes.ASSIGNMENTS) { entry ->
+                AssignmentsScreen(
+                    assignments = viewModel.allAssignments(),
+                    allTasks = viewModel.allTasks(),
+                    onAddAssignment = {
+                        if (entry.isResumed()) navController.navigate(Routes.NEW_ASSIGNMENT)
+                    },
+                    onOpenAssignment = { assignmentId ->
+                        if (entry.isResumed()) navController.navigate(Routes.assignmentDetails(assignmentId))
+                    }
                 )
             }
 

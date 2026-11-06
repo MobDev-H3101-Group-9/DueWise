@@ -28,6 +28,12 @@ class DueWiseViewModel : ViewModel() {
 
     fun assignment(id: Int): Assignment? = assignments.find { it.id == id }
 
+    // Every assignment, nearest deadline first (for the Assignments tab).
+    fun allAssignments(): List<Assignment> = assignments.sortedBy { it.deadline }
+
+    // Every task (the Assignments tab uses this to count each assignment's tasks).
+    fun allTasks(): List<Task> = tasks.toList()
+
     fun task(id: Int): Task? = tasks.find { it.id == id }
 
     // Assignment title for each assignment id, so task cards can show it.

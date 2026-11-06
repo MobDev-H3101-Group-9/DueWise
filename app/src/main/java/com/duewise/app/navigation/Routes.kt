@@ -19,6 +19,7 @@ object Routes {
     const val LOGIN = "login"
     const val TODAY = "today"
     const val UPCOMING = "upcoming"
+    const val ASSIGNMENTS = "assignments"
     const val COMPLETED = "completed"
     const val SETTINGS = "settings"
     const val NOTIFICATIONS = "notifications"
