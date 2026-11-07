@@ -12,9 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,14 +85,16 @@ fun NewAssignmentScreen(
 fun AddTasksScreen(
     assignmentTitle: String,
     deadline: LocalDate,
+    drafts: List<TaskDraft>,
+    onAddDraft: (String, LocalDate) -> Unit,
+    onRemoveDraft: (TaskDraft) -> Unit,
     onBack: () -> Unit,
-    onSavePlan: (List<TaskDraft>) -> Unit
+    onSavePlan: () -> Unit
 ) {
-    // State: tasks added so far, and the form for the next task
-    val drafts = remember { mutableStateListOf<TaskDraft>() }
-    var taskName by remember { mutableStateOf("") }
-    var targetDate by remember { mutableStateOf(LocalDate.now()) }
-    var showNameError by remember { mutableStateOf(false) }
+    // State: the form for the next task (the drafts list comes from the ViewModel)
+    var taskName by rememberSaveable { mutableStateOf("") }
+    var targetDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+    var showNameError by rememberSaveable { mutableStateOf(false) }
 
     val dateIsTooLate = targetDate.isAfter(deadline)
 
@@ -112,7 +112,7 @@ fun AddTasksScreen(
             EmptyState("No tasks added yet. Add at least one task to save your plan.")
         } else {
             for (draft in drafts) {
-                DraftTaskRow(draft = draft, onRemove = { drafts.remove(draft) })
+                DraftTaskRow(draft = draft, onRemove = { onRemoveDraft(draft) })
             }
         }
 
@@ -146,7 +146,7 @@ fun AddTasksScreen(
                 if (taskName.isBlank()) {
                     showNameError = true
                 } else if (!dateIsTooLate) {
-                    drafts.add(TaskDraft(taskName.trim(), targetDate))
+                    onAddDraft(taskName, targetDate)
                     taskName = ""
                 }
             }
@@ -154,7 +154,7 @@ fun AddTasksScreen(
 
         PrimaryButton(
             text = "Save plan & view tasks",
-            onClick = { onSavePlan(drafts.toList()) },
+            onClick = onSavePlan,
             enabled = drafts.isNotEmpty()
         )
         OutlinedActionButton(text = "Back to assignment information", onClick = onBack)

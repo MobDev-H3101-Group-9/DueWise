@@ -306,7 +306,7 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                     )
                 }
             }
-            
+
             composable(
                 route = Routes.DELETE_ASSIGNMENT,
                 arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
@@ -339,7 +339,10 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                         if (entry.isResumed()) navController.popBackStack()
                     },
                     onContinue = { title, subject, deadline ->
-                        if (entry.isResumed()) navController.navigate(Routes.addTasks(title, subject, deadline))
+                        if (entry.isResumed()) {
+                            viewModel.clearDrafts() // start step 2 with an empty task list
+                            navController.navigate(Routes.addTasks(title, subject, deadline))
+                        }
                     }
                 )
             }
@@ -359,12 +362,15 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                 AddTasksScreen(
                     assignmentTitle = title,
                     deadline = deadline,
+                    drafts = viewModel.draftTasks,
+                    onAddDraft = { name, targetDate -> viewModel.addDraft(name, targetDate) },
+                    onRemoveDraft = { draft -> viewModel.removeDraft(draft) },
                     onBack = {
                         if (entry.isResumed()) navController.popBackStack()
                     },
-                    onSavePlan = { drafts ->
+                    onSavePlan = {
                         if (entry.isResumed()) {
-                            viewModel.createAssignment(title, subject, deadline, drafts)
+                            viewModel.createAssignment(title, subject, deadline)
                             // Show the new tasks on Upcoming. Back from there goes to Today, not the form.
                             navController.navigate(Routes.UPCOMING) {
                                 popUpTo(Routes.TODAY)
@@ -386,9 +392,15 @@ private fun NavBackStackEntry.isResumed(): Boolean =
 
 // Switches bottom bar tabs without stacking the same tab screen again.
 private fun goToTab(navController: NavHostController, route: String) {
-    navController.navigate(route) {
-        popUpTo(Routes.TODAY) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+    if (route == Routes.TODAY) {
+        // Today is always the first screen in the back stack,
+        // so going to Today simply means going back to it.
+        navController.popBackStack(Routes.TODAY, inclusive = false)
+    } else {
+        navController.navigate(route) {
+            popUpTo(Routes.TODAY) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 }

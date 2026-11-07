@@ -8,7 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,7 +27,7 @@ import com.duewise.app.ui.theme.TextSecondary
 @Composable
 fun SettingsScreen(onLogOut: () -> Unit) {
     // State: is the "Log out?" dialog showing?
-    var showLogOutDialog by remember { mutableStateOf(false) }
+    var showLogOutDialog by rememberSaveable { mutableStateOf(false) }
 
     ScrollScreen {
         ScreenHeader(title = "Settings")

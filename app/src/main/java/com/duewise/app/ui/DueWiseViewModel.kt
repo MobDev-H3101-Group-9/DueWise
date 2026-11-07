@@ -15,6 +15,10 @@ class DueWiseViewModel : ViewModel() {
     private val assignments = mutableStateListOf<Assignment>()
     private val tasks = mutableStateListOf<Task>()
 
+    // Tasks typed on "Add smaller tasks" that are not saved yet.
+    // They live here (not in the screen) so they are not lost when the screen is rotated.
+    val draftTasks = mutableStateListOf<TaskDraft>()
+
     // Used to give new assignments and tasks a unique id.
     private var nextAssignmentId = 4
     private var nextTaskId = 8
@@ -88,15 +92,30 @@ class DueWiseViewModel : ViewModel() {
         assignments.removeAll { it.id == assignmentId }
     }
 
-    // Saves a new assignment together with its tasks.
-    fun createAssignment(title: String, subject: String, deadline: LocalDate, drafts: List<TaskDraft>) {
+    // ---------- Draft tasks (Add smaller tasks screen) ----------
+
+    fun addDraft(name: String, targetDate: LocalDate) {
+        draftTasks.add(TaskDraft(name.trim(), targetDate))
+    }
+
+    fun removeDraft(draft: TaskDraft) {
+        draftTasks.remove(draft)
+    }
+
+    fun clearDrafts() {
+        draftTasks.clear()
+    }
+
+    // Saves a new assignment together with the draft tasks, then clears the drafts.
+    fun createAssignment(title: String, subject: String, deadline: LocalDate) {
         val assignmentId = nextAssignmentId
         nextAssignmentId++
         assignments.add(Assignment(assignmentId, title.trim(), subject.trim(), deadline))
 
-        for (draft in drafts) {
-            tasks.add(Task(nextTaskId, assignmentId, draft.name.trim(), draft.targetDate))
+        for (draft in draftTasks) {
+            tasks.add(Task(nextTaskId, assignmentId, draft.name, draft.targetDate))
             nextTaskId++
         }
+        draftTasks.clear()
     }
 }

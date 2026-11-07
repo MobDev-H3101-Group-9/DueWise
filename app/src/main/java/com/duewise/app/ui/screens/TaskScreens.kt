@@ -7,7 +7,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -85,8 +84,9 @@ fun EditTaskScreen(
     onSave: (String, LocalDate) -> Unit,
     onCancel: () -> Unit
 ) {
-    var name by remember { mutableStateOf(task.name) }
-    var targetDate by remember { mutableStateOf(task.targetDate) }
+    // rememberSaveable keeps the typed values when the screen is rotated.
+    var name by rememberSaveable { mutableStateOf(task.name) }
+    var targetDate by rememberSaveable { mutableStateOf(task.targetDate) }
 
     val dateIsTooLate = targetDate.isAfter(assignment.deadline)
     val canSave = name.isNotBlank() && !dateIsTooLate
