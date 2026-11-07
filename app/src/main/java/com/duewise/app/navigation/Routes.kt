@@ -38,6 +38,8 @@ object Routes {
     const val ASSIGNMENT_DETAILS = "assignment_details/{$ARG_ASSIGNMENT_ID}"
     fun assignmentDetails(assignmentId: Int) = "assignment_details/$assignmentId"
 
+    const val NEW_TASK = "new_task/{$ARG_ASSIGNMENT_ID}"
+    fun newTask(assignmentId: Int) = "new_task/$assignmentId"
     const val DELETE_ASSIGNMENT = "delete_assignment/{$ARG_ASSIGNMENT_ID}"
     fun deleteAssignment(assignmentId: Int) = "delete_assignment/$assignmentId"
 

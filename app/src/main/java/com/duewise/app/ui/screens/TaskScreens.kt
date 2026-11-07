@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -118,6 +119,48 @@ fun EditTaskScreen(
         }
 
         PrimaryButton(text = "Save changes", onClick = { onSave(name, targetDate) }, enabled = canSave)
+        OutlinedActionButton(text = "Cancel", onClick = onCancel, centered = true)
+    }
+}
+
+// Add one new task to an assignment that already exists.
+@Composable
+fun NewTaskScreen(
+    assignment: Assignment,
+    onSave: (String, LocalDate) -> Unit,
+    onCancel: () -> Unit
+) {
+    var name by rememberSaveable { mutableStateOf("") }
+    var targetDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+
+    val dateIsTooLate = targetDate.isAfter(assignment.deadline)
+    val canSave = name.isNotBlank() && !dateIsTooLate
+
+    ScrollScreen {
+        ScreenHeader(title = "Add task", onBack = onCancel)
+        Text(
+            text = "${assignment.title} · Due ${assignment.deadline.toDisplayDate()}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondary
+        )
+
+        LabeledTextField(
+            label = "Task name",
+            value = name,
+            onValueChange = { name = it },
+            placeholder = "e.g., Prepare presentation slides"
+        )
+
+        DateField(label = "Target date", date = targetDate, onDateSelected = { targetDate = it })
+        if (dateIsTooLate) {
+            Text(
+                text = "Pick a date on or before the final deadline, ${assignment.deadline.toDisplayDate()}.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = DangerRed
+            )
+        }
+
+        PrimaryButton(text = "Save task", onClick = { onSave(name, targetDate) }, enabled = canSave)
         OutlinedActionButton(text = "Cancel", onClick = onCancel, centered = true)
     }
 }

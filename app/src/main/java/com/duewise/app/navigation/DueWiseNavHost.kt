@@ -24,6 +24,7 @@ import com.duewise.app.ui.screens.DeleteTaskScreen
 import com.duewise.app.ui.screens.EditTaskScreen
 import com.duewise.app.ui.screens.LoginScreen
 import com.duewise.app.ui.screens.NewAssignmentScreen
+import com.duewise.app.ui.screens.NewTaskScreen
 import com.duewise.app.ui.screens.NotificationsScreen
 import com.duewise.app.ui.screens.SettingsScreen
 import com.duewise.app.ui.screens.TaskDetailsScreen
@@ -273,6 +274,9 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                             }
                         },
                         onToggleTask = { taskId -> viewModel.toggleCompleted(taskId) },
+                        onAddTask = {
+                            if (entry.isResumed()) navController.navigate(Routes.newTask(assignment.id))
+                        },
                         onDeleteAssignment = {
                             if (entry.isResumed()) navController.navigate(Routes.deleteAssignment(assignment.id))
                         }
@@ -280,6 +284,29 @@ fun DueWiseApp(viewModel: DueWiseViewModel) {
                 }
             }
 
+            composable(
+                route = Routes.NEW_TASK,
+                arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })
+            ) { entry ->
+                val assignmentId = entry.arguments?.getInt(Routes.ARG_ASSIGNMENT_ID) ?: 0
+                val assignment = viewModel.assignment(assignmentId)
+
+                if (assignment != null) {
+                    NewTaskScreen(
+                        assignment = assignment,
+                        onSave = { name, targetDate ->
+                            if (entry.isResumed()) {
+                                viewModel.addTask(assignment.id, name, targetDate)
+                                navController.popBackStack()
+                            }
+                        },
+                        onCancel = {
+                            if (entry.isResumed()) navController.popBackStack()
+                        }
+                    )
+                }
+            }
+            
             composable(
                 route = Routes.DELETE_ASSIGNMENT,
                 arguments = listOf(navArgument(Routes.ARG_ASSIGNMENT_ID) { type = NavType.IntType })

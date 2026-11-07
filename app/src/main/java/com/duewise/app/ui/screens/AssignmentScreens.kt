@@ -24,6 +24,7 @@ import com.duewise.app.ui.components.ScreenHeader
 import com.duewise.app.ui.components.ScrollScreen
 import com.duewise.app.ui.components.SectionLabel
 import com.duewise.app.ui.components.TaskCard
+import com.duewise.app.ui.theme.AccentBlue
 import com.duewise.app.ui.theme.CardBorder
 import com.duewise.app.ui.theme.DangerRed
 import com.duewise.app.ui.theme.TextPrimary
@@ -38,6 +39,7 @@ fun AssignmentDetailsScreen(
     onBack: () -> Unit,
     onOpenTask: (Int) -> Unit,
     onToggleTask: (Int) -> Unit,
+    onAddTask: () -> Unit,
     onDeleteAssignment: () -> Unit
 ) {
     LazyColumn(
@@ -81,6 +83,10 @@ fun AssignmentDetailsScreen(
                     onOpen = { onOpenTask(task.id) }
                 )
             }
+        }
+
+        item {
+            OutlinedActionButton(text = "+ Add task", onClick = onAddTask, textColor = AccentBlue)
         }
 
         item {

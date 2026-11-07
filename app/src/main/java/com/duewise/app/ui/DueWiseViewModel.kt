@@ -72,6 +72,11 @@ class DueWiseViewModel : ViewModel() {
         }
     }
 
+    // Adds one new task to an assignment that already exists.
+    fun addTask(assignmentId: Int, name: String, targetDate: LocalDate) {
+        tasks.add(Task(nextTaskId, assignmentId, name.trim(), targetDate))
+        nextTaskId++
+    }
     // Deletes one task. The other tasks in the assignment stay.
     fun deleteTask(taskId: Int) {
         tasks.removeAll { it.id == taskId }
