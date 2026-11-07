@@ -97,3 +97,16 @@ The current version does not include:
 - Permanent online account storage
 
 The application currently uses sample and in-memory data for its main assignment and task functions.
+
+
+## Updates after Milestone 2 feedback
+
+| Feedback | What we changed |
+| --- | --- |
+| Assignments could be lost once their tasks were gone | New **Assignments** tab lists every assignment, even ones with no tasks |
+| Tasks could not be added after an assignment was created | **+ Add task** on Assignment details opens an Add task screen |
+| Overdue tasks were not visible | Pending tasks dated before today show a red date, an OVERDUE label and "Overdue" status |
+| Some form input did not survive rotation | All typed values use rememberSaveable; the draft task list lives in the ViewModel; the portrait lock was removed |
+| Testing was not documented | Every test run is recorded in TESTING.md |
+
+New routes: `assignments` (bottom bar) and `new_task/{assignmentId}` (Assignment details → + Add task).
