@@ -109,3 +109,10 @@ The application currently uses sample and in-memory data for its main assignment
 | Testing was not documented | Every test run is recorded in TESTING.md |
 
 New routes: `assignments` (bottom bar) and `new_task/{assignmentId}` (Assignment details → + Add task).
+
+
+## AI Assistance
+
+Our group used Claude as a supporting tool during some debugging tasks.
+
+All suggested changes were reviewed, manually applied, tested, and understood by the group members. The team remains responsible for the final implementation and can explain the code and its functionality.
