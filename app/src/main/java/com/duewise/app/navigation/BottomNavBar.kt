@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.duewise.app.ui.theme.AccentBlue
 import com.duewise.app.ui.theme.CardSurface
 import com.duewise.app.ui.theme.TextSecondary
+import androidx.compose.ui.unit.sp
 
 // The 5 tabs in the bottom bar.
 enum class BottomTab(val route: String, val label: String, val icon: ImageVector) {
@@ -34,7 +35,14 @@ fun BottomNavBar(currentRoute: String?, onTabSelected: (String) -> Unit) {
                 selected = currentRoute == tab.route,
                 onClick = { onTabSelected(tab.route) },
                 icon = { Icon(tab.icon, contentDescription = null) },
-                label = { Text(tab.label, maxLines = 1) },
+                label = {
+                    Text(
+                        text = tab.label,
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = AccentBlue,
                     selectedTextColor = AccentBlue,
