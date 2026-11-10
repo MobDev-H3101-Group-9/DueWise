@@ -6,7 +6,6 @@ Instead of only keeping track of the final deadline, students can create an assi
 
 ## Group Members
 
-- Devie Dela Cruz
 - Ibrahim Lagyal
 - GV Roma
 - Jeah May Pareja
