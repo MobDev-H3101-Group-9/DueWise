@@ -110,6 +110,8 @@ The application currently uses sample and in-memory data for its main assignment
 
 New routes: `assignments` (bottom bar) and `new_task/{assignmentId}` (Assignment details → + Add task).
 
+## Testing
+   Test results (33 checks and bug log): [DueWise Test Record](https://docs.google.com/spreadsheets/d/1QHImIY75_-HYRzZcCDUAyOS0EpK0CGeK-4QuVzqSMN4/edit?usp=sharing)
 
 ## AI Assistance
 
